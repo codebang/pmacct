@@ -60,6 +60,11 @@ void p_kafka_set_topic(struct p_kafka_host *kafka_host, char *topic)
     if (kafka_host->topic) p_kafka_unset_topic(kafka_host);
 
     if (kafka_host->rk && kafka_host->topic_cfg) {
+      /* ignore the ack to speed the send process*/
+      char tmp[10];
+      char errstr[512];
+      snprintf(tmp, sizeof(tmp), "%i", 0);
+      rd_kafka_topic_conf_set(kafka_host->topic_cfg , "request.required.acks",tmp,errstr, sizeof(errstr));
       kafka_host->topic = rd_kafka_topic_new(kafka_host->rk, topic, kafka_host->topic_cfg);
       kafka_host->topic_cfg = NULL; /* rd_kafka_topic_new() destroys conf as per rdkafka.h */
     }
@@ -313,18 +318,24 @@ void p_kafka_close(struct p_kafka_host *kafka_host, int set_fail)
 
 int p_kafka_check_outq_len(struct p_kafka_host *kafka_host)
 {
-  int outq_len = 0, old_outq_len = 0;
+  int outq_len = 0, old_outq_len = 0, wait_cnt＝ 5;
 
   if (kafka_host->rk) {
     while ((outq_len = rd_kafka_outq_len(kafka_host->rk)) > 0) {
       if (!old_outq_len) {
-	old_outq_len = outq_len;
+	       old_outq_len = outq_len;
       }
       else {
         if (outq_len == old_outq_len) {
-	  Log(LOG_ERR, "ERROR ( %s/%s ): Connection failed to Kafka: p_kafka_check_outq_len()\n", config.name, config.type);
-          p_kafka_close(kafka_host, TRUE);
-	  return outq_len; 
+          if（ !wait_cnt ）{
+              Log(LOG_ERR, "ERROR ( %s/%s ): Connection failed to Kafka: p_kafka_check_outq_len()\n", config.name, config.type);
+              p_kafka_close(kafka_host, TRUE);
+              return outq_len; 
+          }
+          else{
+            wait_cnt--;
+          }
+
 	}
       }
 

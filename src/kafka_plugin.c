@@ -368,6 +368,8 @@ void kafka_cache_purge(struct chained_cache *queue[], int index)
 
     if (queue[j]->valid == PRINT_CACHE_FREE) continue;
 
+    if (queue[j]->bytes_counter == 0) continue;
+    
     json_obj = compose_json(config.what_to_count, config.what_to_count_2, queue[j]->flow_type,
                          &queue[j]->primitives, pbgp, pnat, pmpls, pcust, pvlen, queue[j]->bytes_counter,
 			 queue[j]->packet_counter, queue[j]->flow_counter, queue[j]->tcp_flags,
