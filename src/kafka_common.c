@@ -318,7 +318,9 @@ void p_kafka_close(struct p_kafka_host *kafka_host, int set_fail)
 
 int p_kafka_check_outq_len(struct p_kafka_host *kafka_host)
 {
-  int outq_len = 0, old_outq_len = 0, wait_cnt＝ 5;
+  int outq_len = 0, old_outq_len = 0;
+
+  int wait_cnt＝ 5;
 
   if (kafka_host->rk) {
     while ((outq_len = rd_kafka_outq_len(kafka_host->rk)) > 0) {
